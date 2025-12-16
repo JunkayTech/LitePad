@@ -1,0 +1,42 @@
+name: litepad
+description: A beautiful modern notepad app with voice features and local storage.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  provider: ^6.1.0
+  flutter_tts: ^4.0.2
+  speech_to_text: ^7.0.0
+  share_plus: ^10.0.0
+  shared_preferences: ^2.2.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.2
+  http: ^0.13.6
+  image_picker: ^1.0.0
+
+  # Added dependencies for About screen and external links
+  package_info_plus: ^4.0.0
+  url_launcher: ^6.1.10
+
+  # Dependencies required by the updated summarizer screen
+  file_picker: ^10.3.7
+  permission_handler: ^12.0.1
+  pdf: ^3.8.1
+  docx_template: ^0.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/templates/summary_template.docx
