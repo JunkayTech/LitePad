@@ -1,0 +1,31 @@
+name: Flutter AAB Build
+
+on:
+  workflow_dispatch:   # run manually
+  push:
+    branches: [ main ] # run on pushes to main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'   # match your Flutter SDK
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build AAB
+        run: flutter build appbundle --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
