@@ -40,7 +40,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
               await service.updateNote(
                 widget.note,
                 title: _titleCtrl.text,
-                content: _contentCtrl.text,
+                content: _contentCtrl.text, // 👈 no trim, preserves spaces
               );
               if (mounted) Navigator.pop(context);
             },
@@ -60,7 +60,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
             Expanded(
               child: _GlassField(
                 controller: _contentCtrl,
-                hint: 'Edit your note...',
+                hint: '', // 👈 remove "Edit your note..." placeholder
                 style: Theme.of(context).textTheme.bodyLarge,
                 maxLines: null,
                 expands: true,
@@ -77,7 +77,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
           await service.updateNote(
             widget.note,
             title: _titleCtrl.text,
-            content: _contentCtrl.text,
+            content: _contentCtrl.text, // 👈 preserves raw spaces
           );
           if (mounted) Navigator.pop(context);
         },
@@ -110,13 +110,12 @@ class _GlassField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       expands: expands,
+      keyboardType: TextInputType.multiline, // 👈 behaves like notepad
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: hint, // now empty string for content field
+        border: InputBorder.none, // 👈 no borders, plain sheet look
         filled: true,
         fillColor: isDark ? const Color(0x22171822) : const Color(0x22FFFFFF),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.all(18),
       ),
       style: style,
