@@ -1,9 +1,9 @@
 name: Flutter AAB Build
 
 on:
-  workflow_dispatch:   # run manually
+  workflow_dispatch:
   push:
-    branches: [ main ] # run on pushes to main
+    branches: [ main ]
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'   # match your Flutter SDK
+          flutter-version: '3.24.0'   # match your project SDK
 
       - name: Install dependencies
         run: flutter pub get
