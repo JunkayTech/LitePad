@@ -4,9 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // Android Gradle Plugin compatible with Gradle 8.9
         classpath("com.android.tools.build:gradle:8.4.2")
-        // Kotlin Gradle Plugin (latest stable supported by AGP 8.4.x)
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
     }
 }
@@ -18,7 +16,13 @@ allprojects {
     }
 }
 
-// Custom build directory setup
+// ✅ Add this block
+ext {
+    compileSdkVersion = 35
+    minSdkVersion = 21
+    targetSdkVersion = 35
+}
+
 val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
