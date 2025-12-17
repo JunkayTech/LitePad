@@ -16,12 +16,9 @@ allprojects {
     }
 }
 
-// ✅ Add this block
-ext {
-    compileSdkVersion = 35
-    minSdkVersion = 21
-    targetSdkVersion = 35
-}
+extra["compileSdk"] = 35
+extra["minSdk"] = 21
+extra["targetSdk"] = 35
 
 val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
