@@ -16,6 +16,7 @@ allprojects {
     }
 }
 
+// ✅ Define SDK versions as extra properties
 extra["compileSdk"] = 35
 extra["minSdk"] = 21
 extra["targetSdk"] = 35
