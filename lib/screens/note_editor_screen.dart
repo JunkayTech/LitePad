@@ -5,18 +5,6 @@ import 'package:provider/provider.dart';
 import '../models/note.dart';
 import '../services/note_service.dart';
 
-abstract class NoteBlock {}
-
-class TextBlock extends NoteBlock {
-  String text;
-  TextBlock(this.text);
-}
-
-class ImageBlock extends NoteBlock {
-  String path;
-  ImageBlock(this.path);
-}
-
 class NoteEditorScreen extends StatefulWidget {
   final Note note;
   const NoteEditorScreen({super.key, required this.note});
@@ -27,66 +15,42 @@ class NoteEditorScreen extends StatefulWidget {
 
 class _NoteEditorScreenState extends State<NoteEditorScreen> {
   late final TextEditingController _titleCtrl;
+  late final TextEditingController _contentCtrl;
   bool _saving = false;
 
   final ImagePicker _picker = ImagePicker();
-  late List<NoteBlock> _blocks;
+  final List<String> _images = []; // store image paths
 
   @override
   void initState() {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.note.title);
-
-    // Initialize blocks from content + imagePaths
-    _blocks = [];
-    final lines = widget.note.content.split('\n');
-    for (final line in lines) {
-      if (line.startsWith('<image:')) {
-        final index = int.tryParse(line.replaceAll(RegExp(r'[^0-9]'), ''));
-        if (index != null && index < widget.note.imagePaths.length) {
-          _blocks.add(ImageBlock(widget.note.imagePaths[index]));
-        }
-      } else {
-        _blocks.add(TextBlock(line));
-      }
-    }
-    if (_blocks.isEmpty) _blocks.add(TextBlock(''));
+    _contentCtrl = TextEditingController(text: widget.note.content);
+    _images.addAll(widget.note.imagePaths); // preload existing images if any
   }
 
-  Future<void> _insertImage(ImageSource source) async {
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _contentCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
     final XFile? picked = await _picker.pickImage(source: source);
     if (picked != null) {
       setState(() {
-        // Insert image at current position (after last focused text block)
-        int insertIndex = _blocks.length;
-        _blocks.add(ImageBlock(picked.path));
-        // Add a new text block after image so user can continue writing
-        _blocks.add(TextBlock(''));
+        _images.add(picked.path);
       });
     }
   }
 
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
-
-    // Collect text + images back into content + imagePaths
-    final contentBuffer = StringBuffer();
-    final imagePaths = <String>[];
-    for (final block in _blocks) {
-      if (block is TextBlock) {
-        contentBuffer.writeln(block.text);
-      } else if (block is ImageBlock) {
-        final idx = imagePaths.length;
-        imagePaths.add(block.path);
-        contentBuffer.writeln('<image:$idx>');
-      }
-    }
-
-    final content = contentBuffer.toString().trim();
-    if (content.isEmpty && imagePaths.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note cannot be empty')),
-      );
+    final content = _contentCtrl.text.trim();
+    if (content.isEmpty && _images.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Note cannot be empty')));
       return;
     }
 
@@ -95,7 +59,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final updated = widget.note.copyWith(
       title: title.isEmpty ? widget.note.title : title,
       content: content,
-      imagePaths: imagePaths,
+      imagePaths: _images,
       updatedAt: DateTime.now(),
     );
 
@@ -105,9 +69,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       Navigator.of(context).pop(updated);
     } catch (e, st) {
       debugPrint('Save note failed: $e\n$st');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save note')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to save note')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -115,16 +78,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.note.locked) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Locked Note')),
-        body: const Center(
-          child: Text('This note is locked and cannot be edited',
-              style: TextStyle(fontSize: 18), textAlign: TextAlign.center),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit note'),
@@ -134,9 +87,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             tooltip: 'Insert image',
             onSelected: (choice) {
               if (choice == 'gallery') {
-                _insertImage(ImageSource.gallery);
+                _pickImage(ImageSource.gallery);
               } else if (choice == 'camera') {
-                _insertImage(ImageSource.camera);
+                _pickImage(ImageSource.camera);
               }
             },
             itemBuilder: (ctx) => [
@@ -167,43 +120,37 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: ListView.builder(
-                  itemCount: _blocks.length,
-                  itemBuilder: (ctx, i) {
-                    final block = _blocks[i];
-                    if (block is TextBlock) {
-                      return TextField(
-                        controller: TextEditingController(text: block.text),
-                        onChanged: (val) => block.text = val,
-                        maxLines: null,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Write here...',
-                        ),
-                      );
-                    } else if (block is ImageBlock) {
-                      return Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child:
-                                Image.file(File(block.path), fit: BoxFit.cover),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.red),
-                            tooltip: 'Delete image',
-                            onPressed: () {
-                              setState(() {
-                                _blocks.removeAt(i);
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
+                child: ListView(
+                  children: [
+                    TextField(
+                      controller: _contentCtrl,
+                      maxLines: null,
+                      expands: false,
+                      decoration: const InputDecoration(
+                        hintText: 'Write your note here...',
+                        border: InputBorder.none,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ..._images.map((path) => Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Image.file(File(path), fit: BoxFit.cover),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              tooltip: 'Delete image',
+                              onPressed: () {
+                                setState(() {
+                                  _images.remove(path);
+                                });
+                              },
+                            ),
+                          ],
+                        )),
+                  ],
                 ),
               ),
             ],
