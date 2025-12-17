@@ -5,16 +5,16 @@ plugins {
 }
 
 android {
-    namespace = "com.example.litepad"
-    compileSdk = 35
+    namespace = "com.example.litepad" // 👈 change to your actual package name
+    compileSdk = rootProject.extra["compileSdk"] as Int
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
-        applicationId = "com.example.litepad"
-        minSdk = 21
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        applicationId = "com.example.litepad" // 👈 change to your actual package name
+        minSdk = rootProject.extra["minSdk"] as Int
+        targetSdk = rootProject.extra["targetSdk"] as Int
+        versionCode = flutterVersionCode.toInt()
+        versionName = flutterVersionName
     }
 
     compileOptions {
@@ -26,11 +26,28 @@ android {
         jvmTarget = "11"
     }
 
+    signingConfigs {
+        create("release") {
+            // 👇 Replace with your keystore details
+            storeFile = file("release.keystore")
+            storePassword = "your-store-password"
+            keyAlias = "your-key-alias"
+            keyPassword = "your-key-password"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = false
-            isShrinkResources = false
         }
     }
 
@@ -47,4 +64,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }
